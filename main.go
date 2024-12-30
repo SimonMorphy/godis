@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/SimonMorphy/godis/config"
 	"github.com/SimonMorphy/godis/lib/logger"
+	"github.com/SimonMorphy/godis/resp/handler"
 	"github.com/SimonMorphy/godis/tcp"
 	"os"
 )
@@ -34,7 +35,7 @@ func main() {
 	}
 	err := tcp.ListenAndServeWithSignal(&tcp.Config{
 		Address: fmt.Sprintf("%s:%d", config.Properties.Bind, config.Properties.Port),
-	}, tcp.MakeEchoHandler())
+	}, handler.MakeRespHandler())
 	if err != nil {
 		logger.Error(err)
 	}
