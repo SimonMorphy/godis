@@ -3,6 +3,7 @@ package database
 import (
 	"github.com/SimonMorphy/godis/interface/database"
 	"github.com/SimonMorphy/godis/interface/resp"
+	"github.com/SimonMorphy/godis/lib/utils"
 	"github.com/SimonMorphy/godis/resp/reply"
 )
 
@@ -27,6 +28,7 @@ func Set(db *DB, args CommandLine) resp.Reply {
 		Data: value,
 	}
 	db.PutEntity(key, entity)
+	db.addAof(utils.ToCmdLine3("set", args...))
 	return reply.MakeOKReply()
 }
 func SetNX(db *DB, args CommandLine) resp.Reply {
@@ -36,6 +38,7 @@ func SetNX(db *DB, args CommandLine) resp.Reply {
 		Data: value,
 	}
 	absent := db.PutIfAbsent(key, entity)
+	db.addAof(utils.ToCmdLine3("setnx", args...))
 	return reply.MakeIntReply(int64(absent))
 }
 func GetSet(db *DB, args CommandLine) resp.Reply {
@@ -48,7 +51,8 @@ func GetSet(db *DB, args CommandLine) resp.Reply {
 	db.PutEntity(key, &database.DataEntity{
 		Data: value,
 	})
-	return reply.MakeBulkReply(entity.Data.([]byte))
+	db.addAof(utils.ToCmdLine3("getset", args...))
+	return reply.MakeBulkReply([]byte(entity.Data.(string)))
 }
 func StrLen(db *DB, args CommandLine) resp.Reply {
 	key := string(args[0])

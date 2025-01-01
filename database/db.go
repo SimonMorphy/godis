@@ -10,8 +10,9 @@ import (
 )
 
 type DB struct {
-	index int
-	data  dict.Dict
+	index  int
+	data   dict.Dict
+	addAof func(database.CmdLine)
 }
 
 type CommandLine = [][]byte
@@ -19,6 +20,8 @@ type CommandLine = [][]byte
 func MakeDB() *DB {
 	return &DB{
 		data: dict.MakeSyncDic(),
+		addAof: func(line database.CmdLine) {
+		},
 	}
 }
 

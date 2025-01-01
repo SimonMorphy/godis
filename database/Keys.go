@@ -3,6 +3,7 @@ package database
 import (
 	"github.com/SimonMorphy/godis/datastruct/dict"
 	"github.com/SimonMorphy/godis/interface/resp"
+	"github.com/SimonMorphy/godis/lib/utils"
 	"github.com/SimonMorphy/godis/lib/wildcard"
 	"github.com/SimonMorphy/godis/resp/reply"
 )
@@ -14,6 +15,9 @@ func Del(db *DB, args CommandLine) resp.Reply {
 		keys[i] = string(v)
 	}
 	deleted := db.Removes(keys...)
+	if deleted > 0 {
+		db.addAof(utils.ToCmdLine3("del", args...))
+	}
 	return reply.MakeIntReply(int64(deleted))
 }
 
@@ -33,6 +37,7 @@ func Exists(db *DB, args CommandLine) resp.Reply {
 // FlushDB
 func FlushDB(db *DB, args CommandLine) resp.Reply {
 	db.data.Clear()
+	db.addAof(utils.ToCmdLine3("flushdb", args...))
 	return reply.MakeOKReply()
 }
 
@@ -62,6 +67,7 @@ func Rename(db *DB, args CommandLine) resp.Reply {
 	}
 	db.PutEntity(dest, entity)
 	db.Remove(src)
+	db.addAof(utils.ToCmdLine3("rename", args...))
 	return reply.MakeOKReply()
 }
 
@@ -78,6 +84,7 @@ func Renamenx(db *DB, args CommandLine) resp.Reply {
 	}
 	db.PutEntity(dest, entity)
 	db.Remove(src)
+	db.addAof(utils.ToCmdLine3("renamenx", args...))
 	return reply.MakeOKReply()
 }
 

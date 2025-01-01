@@ -1,7 +1,9 @@
 package database
 
 import (
+	"github.com/SimonMorphy/godis/aof"
 	"github.com/SimonMorphy/godis/config"
+	database2 "github.com/SimonMorphy/godis/interface/database"
 	"github.com/SimonMorphy/godis/interface/resp"
 	"github.com/SimonMorphy/godis/lib/logger"
 	"github.com/SimonMorphy/godis/resp/reply"
@@ -10,7 +12,8 @@ import (
 )
 
 type Database struct {
-	dbSet []*DB
+	dbSet      []*DB
+	aofHandler *aof.AofHandler
 }
 
 func NewDatabase() *Database {
@@ -23,6 +26,19 @@ func NewDatabase() *Database {
 		db := MakeDB()
 		db.index = i
 		database.dbSet[i] = db
+	}
+	if config.Properties.AppendOnly {
+		handler, err := aof.NewAofHandler(database)
+		if err != nil {
+			panic(err)
+		}
+		database.aofHandler = handler
+		for _, db := range database.dbSet {
+			sdb := db
+			sdb.addAof = func(line database2.CmdLine) {
+				database.aofHandler.AddAof(sdb.index, line)
+			}
+		}
 	}
 	return database
 }
