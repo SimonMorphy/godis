@@ -5,7 +5,10 @@ import (
 	"github.com/SimonMorphy/godis/interface/database"
 	"github.com/SimonMorphy/godis/lib/logger"
 	"github.com/SimonMorphy/godis/lib/utils"
+	"github.com/SimonMorphy/godis/resp/connection"
+	"github.com/SimonMorphy/godis/resp/parser"
 	"github.com/SimonMorphy/godis/resp/reply"
+	"io"
 	"os"
 	"strconv"
 )
@@ -75,5 +78,34 @@ func (h *AofHandler) handleAof() {
 }
 
 func (h *AofHandler) LoadAof() {
-
+	f, err := os.Open(h.aofFileName)
+	c := &connection.Connection{}
+	if err != nil {
+		logger.Error(err)
+		return
+	}
+	defer f.Close()
+	ch := parser.ParseStream(f)
+	for p := range ch {
+		if p.Err != nil {
+			if p.Err == io.EOF {
+				break
+			}
+			logger.Error(p.Err)
+			continue
+		}
+		if p.Data == nil {
+			logger.Error("空指令")
+			continue
+		}
+		r, ok := p.Data.(*reply.MultiBulkReply)
+		if !ok {
+			logger.Error("非多行协议")
+			continue
+		}
+		rep := h.database.Exec(c, r.Args)
+		if reply.IsErrReply(rep) {
+			logger.Error(rep)
+		}
+	}
 }

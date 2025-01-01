@@ -3,12 +3,14 @@ package handler
 import (
 	"context"
 	"errors"
+	"github.com/SimonMorphy/godis/cluster"
+	"github.com/SimonMorphy/godis/config"
+	database2 "github.com/SimonMorphy/godis/database"
 	"io"
 	"net"
 	"strings"
 	"sync"
 
-	database2 "github.com/SimonMorphy/godis/database"
 	"github.com/SimonMorphy/godis/interface/database"
 	"github.com/SimonMorphy/godis/lib/logger"
 	"github.com/SimonMorphy/godis/lib/sync/atomic"
@@ -29,7 +31,11 @@ type RespHandler struct {
 
 func MakeRespHandler() *RespHandler {
 	var db database.Database
-	db = database2.NewDatabase()
+	if config.Properties.Self != "" && len(config.Properties.Peers) > 0 {
+		db = cluster.MakeClusterDatabase()
+	} else {
+		db = database2.NewStandAloneDatabase()
+	}
 	return &RespHandler{
 		db: db,
 	}

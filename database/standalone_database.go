@@ -11,13 +11,13 @@ import (
 	"strings"
 )
 
-type Database struct {
+type StandAloneDatabase struct {
 	dbSet      []*DB
 	aofHandler *aof.AofHandler
 }
 
-func NewDatabase() *Database {
-	database := &Database{}
+func NewStandAloneDatabase() *StandAloneDatabase {
+	database := &StandAloneDatabase{}
 	if config.Properties.Databases == 0 {
 		config.Properties.Databases = 16
 	}
@@ -43,7 +43,7 @@ func NewDatabase() *Database {
 	return database
 }
 
-func (d *Database) Exec(client resp.Connection, args [][]byte) resp.Reply {
+func (d *StandAloneDatabase) Exec(client resp.Connection, args [][]byte) resp.Reply {
 	defer func() {
 		if err := recover(); err != nil {
 			logger.Error(err)
@@ -60,13 +60,13 @@ func (d *Database) Exec(client resp.Connection, args [][]byte) resp.Reply {
 	return d.dbSet[index].Exec(client, args)
 }
 
-func (d *Database) Close() {
+func (d *StandAloneDatabase) Close() {
 }
 
-func (d *Database) AfterClientClose(c resp.Connection) {
+func (d *StandAloneDatabase) AfterClientClose(c resp.Connection) {
 }
 
-func execSelect(connection resp.Connection, database *Database, args [][]byte) resp.Reply {
+func execSelect(connection resp.Connection, database *StandAloneDatabase, args [][]byte) resp.Reply {
 	dbNum, err := strconv.Atoi(string(args[0]))
 	if err != nil {
 		return reply.MakeErrReply("ERR invalid DB index")
